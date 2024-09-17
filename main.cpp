@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include "Ball.h"
+#include "Paddle.h"
 #include <iostream>
 
 using namespace std;
@@ -10,18 +11,7 @@ int main() {
     const float screenHeight = 600;
 
     Ball myBall(screenWidth / 3, screenHeight / 2, 5, 5, 5);
-
-    class Paddle {
-        public:
-            Rectangle vect;
-
-    };
-
-    Paddle myPaddle;
-    myPaddle.vect.width = screenWidth / 8;
-    myPaddle.vect.height = screenHeight / 40;
-    myPaddle.vect.x = screenWidth / 2;
-    myPaddle.vect.y = screenHeight * 7/8;
+    Paddle myPaddle(screenWidth / 2, screenHeight * 7 / 8, screenWidth / 8, screenHeight / 40);
 
     class Brick {
         public:
@@ -55,17 +45,16 @@ int main() {
 
     while (!WindowShouldClose()) {
         
+        myPaddle.Update(screenWidth);
         myBall.Update();
-
-        myPaddle.vect.x = GetMouseX() - myPaddle.vect.width/2;
 
         bool collision = CheckCollisionCircleRec(myBall.circ, myBall.radius, myPaddle.vect);
 
         BeginDrawing();
         ClearBackground(DARKPURPLE);
 
+        myPaddle.Draw();
         myBall.Draw();
-        DrawRectangleRec(myPaddle.vect, RED);
 
         for (int row = 0; row < numRows; row++) {
             for (int i = 0; i < numBricks; i++) {
