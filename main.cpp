@@ -34,6 +34,20 @@ int main() {
     myPaddle.vect.x = screenWidth / 2;
     myPaddle.vect.y = screenHeight * 7/8;
 
+    class Brick {
+        public:
+            Rectangle vect;
+
+
+    };
+    const int spacing = 5;
+    const int brickWidth = screenWidth / 8;
+    const int brickHeight = screenHeight / 40;
+    const int numRows = 6;
+    const int numBricks = 7;
+
+
+
 
     InitWindow(screenWidth, screenHeight, "Purple window!");
     SetTargetFPS(60);
@@ -52,6 +66,17 @@ int main() {
 
         DrawCircleV(myBall.circ, myBall.radius, GREEN);
         DrawRectangleRec(myPaddle.vect, RED);
+
+        for (int row = 0; row < numRows; row++) {
+            for (int i = 0; i < numBricks; i++) {
+
+                int posX = brickWidth/2 + i * (brickWidth + spacing);
+                int posY = brickWidth/2 + row * (brickHeight + spacing);
+
+                Rectangle rect = { posX, posY, brickWidth, brickHeight };
+                DrawRectangleRec(rect, MAROON);
+            }
+        }
 
         DrawText(TextFormat("X coordinate is: %i", myBall.circ.x), screenWidth * 0.05, screenHeight * 0.95, 20, RED);
 
