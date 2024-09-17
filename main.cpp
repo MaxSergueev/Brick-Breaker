@@ -1,26 +1,15 @@
 #include "raylib.h"
+#include "Ball.h"
 #include <iostream>
 
 using namespace std;
 
 int main() {
 
-    float screenWidth = 600;
-    float screenHeight = 600;
+    const float screenWidth = 600;
+    const float screenHeight = 600;
 
-    class Ball {
-        public:
-            Vector2 circ;
-            int radius;
-            int speedX;
-            int speedY;
-    };
-
-    Ball myBall;
-    myBall.circ = { screenWidth / 3, screenHeight / 2 };
-    myBall.radius = 5;
-    myBall.speedX = 5;
-    myBall.speedY = 5;
+    Ball myBall(screenWidth / 3, screenHeight / 2, 5, 5, 5);
 
     class Paddle {
         public:
@@ -66,8 +55,7 @@ int main() {
 
     while (!WindowShouldClose()) {
         
-        myBall.circ.x += myBall.speedX;
-        myBall.circ.y += myBall.speedY;
+        myBall.Update();
 
         myPaddle.vect.x = GetMouseX() - myPaddle.vect.width/2;
 
@@ -76,7 +64,7 @@ int main() {
         BeginDrawing();
         ClearBackground(DARKPURPLE);
 
-        DrawCircleV(myBall.circ, myBall.radius, GREEN);
+        myBall.Draw();
         DrawRectangleRec(myPaddle.vect, RED);
 
         for (int row = 0; row < numRows; row++) {
@@ -101,18 +89,11 @@ int main() {
 
         EndDrawing();
 
-        //Change ball's direction if it hits the border of the window
-        if (myBall.circ.x > screenWidth || myBall.circ.x < 0) {
-            myBall.speedX *= -1;
-        }
-
-        if (myBall.circ.y > screenWidth || myBall.circ.y < 0) {
-            myBall.speedY *= -1;
-        }
-
         if (collision) {
             myBall.speedY *= -1;
         }
+
+        myBall.CheckWindowCollision(screenWidth, screenHeight);
 
         
     }
