@@ -4,66 +4,73 @@
 using namespace std;
 
 int main() {
-    int screenWidth = 600;
-    int screenHeight = 600;
+
+    float screenWidth = 600;
+    float screenHeight = 600;
 
     class Ball {
         public:
-            int X;
-            int Y;
+            Vector2 circ;
+            int radius;
             int speedX;
             int speedY;
     };
 
     Ball myBall;
+    myBall.circ = { screenWidth / 3, screenHeight / 2 };
+    myBall.radius = 10;
     myBall.speedX = 5;
     myBall.speedY = 5;
-    myBall.X = screenWidth / 3;
-    myBall.Y = screenHeight / 2;
 
-    class pong {
+    class Paddle {
         public:
-            int width;
-            int height;
-
-            int X;
-            int Y;
+            Rectangle vect;
 
     };
 
-    pong myPong;
-    myPong.width = screenWidth / 30;
-    myPong.height = screenHeight / 100;
-    myPong.X = screenHeight / 2;
-    myPong.Y = screenWidth / 2;
+    Paddle myPaddle;
+    myPaddle.vect.width = screenWidth / 8;
+    myPaddle.vect.height = screenHeight / 40;
+    myPaddle.vect.x = screenWidth / 2;
+    myPaddle.vect.y = screenHeight * 7/8;
 
-
-    
-     
-    cout << "Hello World" << endl;
 
     InitWindow(screenWidth, screenHeight, "Purple window!");
     SetTargetFPS(60);
 
     while (!WindowShouldClose()) {
-        myBall.X += myBall.speedX;
-        myBall.Y += myBall.speedY;
+        
+        myBall.circ.x += myBall.speedX;
+        myBall.circ.y += myBall.speedY;
+
+        myPaddle.vect.x = GetMouseX() - myPaddle.vect.width/2;
+
+        bool collision = CheckCollisionCircleRec(myBall.circ, myBall.radius, myPaddle.vect);
 
         BeginDrawing();
         ClearBackground(DARKPURPLE);
-        DrawCircle(myBall.X, myBall.Y, 50, GREEN);
-        DrawRectangle(myPong.X, myPong.Y, myPong.width, myPong.height, RED);
-        //DrawText("X coordinate is:" %int, 10, 10, 10, RED);
-        DrawText(TextFormat("X coordinate is: %i", myBall.X), 20, 20, 20, RED);
+
+        DrawCircleV(myBall.circ, myBall.radius, GREEN);
+        DrawRectangleRec(myPaddle.vect, RED);
+
+        DrawText(TextFormat("X coordinate is: %i", myBall.circ.x), screenWidth * 0.05, screenHeight * 0.95, 20, RED);
+
         EndDrawing();
 
-        if (myBall.X > screenWidth || myBall.X < 0) {
+        //Change ball's direction if it hits the border of the window
+        if (myBall.circ.x > screenWidth || myBall.circ.x < 0) {
             myBall.speedX *= -1;
         }
 
-        if (myBall.Y > screenWidth || myBall.Y < 0) {
+        if (myBall.circ.y > screenWidth || myBall.circ.y < 0) {
             myBall.speedY *= -1;
         }
+
+        if (collision) {
+            myBall.speedY *= -1;
+        }
+
+        
     }
 
     CloseWindow();
