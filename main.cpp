@@ -18,7 +18,7 @@ int main() {
 
     Ball myBall;
     myBall.circ = { screenWidth / 3, screenHeight / 2 };
-    myBall.radius = 10;
+    myBall.radius = 5;
     myBall.speedX = 5;
     myBall.speedY = 5;
 
@@ -41,10 +41,22 @@ int main() {
 
     };
     const int spacing = 5;
-    const int brickWidth = screenWidth / 8;
+    const int numRows = 10;
+    const int numBricks = 8;
+    const int brickWidth = screenWidth / 10;
     const int brickHeight = screenHeight / 40;
-    const int numRows = 6;
-    const int numBricks = 7;
+
+    //Calcluate total brick height, then calculate margin between bricks and borders
+    int brickGridWidth = numBricks * brickWidth + (numBricks - 1) * spacing;
+    int brickMargin = (screenWidth - brickGridWidth) / 2;
+
+    //Visibility of bricks
+    bool bricks[numRows][numBricks];
+    for (int row = 0; row < numRows; row++) {
+        for (int i = 0; i < numBricks; i++) {
+            bricks[row][i] = true;
+        }
+    }
 
 
 
@@ -69,12 +81,19 @@ int main() {
 
         for (int row = 0; row < numRows; row++) {
             for (int i = 0; i < numBricks; i++) {
+                if(bricks[row][i]){
 
-                int posX = brickWidth/2 + i * (brickWidth + spacing);
-                int posY = brickWidth/2 + row * (brickHeight + spacing);
+                    int posX = brickMargin + i * (brickWidth + spacing);
+                    int posY = brickMargin + row * (brickHeight + spacing);
 
-                Rectangle rect = { posX, posY, brickWidth, brickHeight };
-                DrawRectangleRec(rect, MAROON);
+                    Rectangle rect = { posX, posY, brickWidth, brickHeight };
+                    DrawRectangleRec(rect, MAROON);
+
+                    if (CheckCollisionCircleRec(myBall.circ, myBall.radius, rect)) {
+                        bricks[row][i] = false;
+                        myBall.speedY *= -1;
+                    }
+                }
             }
         }
 
