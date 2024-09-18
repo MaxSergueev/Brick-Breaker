@@ -16,30 +16,35 @@ int main() {
     const float screenHeight = 600;
 
     GameScreen currentScreen = TITLE;
-
+    
     Ball myBall(screenWidth / 3, screenHeight / 2, 5, 5, 5);
     Paddle myPaddle(screenWidth / 2, screenHeight * 7 / 8, screenWidth / 8, screenHeight / 40);
     BrickGrid brickGrid(screenWidth, screenHeight);
 
-    bool collision;
 
+    bool collision;
+    
     InitWindow(screenWidth, screenHeight, "Brick Breaker");
     SetTargetFPS(60);
 
     while (!WindowShouldClose()) {
-
+        
         switch (currentScreen)
         {
-        case TITLE:
-
+        case TITLE: 
+        {
             if (IsKeyPressed(KEY_ENTER))
             {
                 currentScreen = GAMEPLAY;
             }
 
             break;
+        }
 
-        case GAMEPLAY:
+            
+
+        case GAMEPLAY: 
+        {
 
             myPaddle.Update(screenWidth);
             myBall.Update();
@@ -57,15 +62,20 @@ int main() {
             }
 
             break;
+        }
 
-        case ENDING:
-
-            if (IsKeyPressed(KEY_ENTER))
+        case ENDING: 
+        {
+            if (IsKeyPressed(KEY_ENTER)) ////////////////////////// Feels like a dirty way to reset
             {
                 currentScreen = TITLE;
+                brickGrid.Reset();
+                myBall.circ = { screenWidth / 2, screenHeight / 2 };
+                myBall.speedY *= -1;
             }
 
             break;
+        }
 
         default: break;
         }
@@ -96,8 +106,9 @@ int main() {
         case ENDING:
         {
             DrawRectangle(0, 0, screenWidth, screenHeight, BLUE);
-            DrawText("ENDING SCREEN", 20, 20, 40, DARKBLUE);
-            DrawText("PRESS ENTER", 120, 220, 20, DARKBLUE);
+            DrawText("ENDING SCREEN", screenWidth / 12, screenHeight * 0.16, 60, DARKBLUE);
+            DrawText(TextFormat("Score: %i", brickGrid.Score()), screenWidth / 5, screenHeight * 0.25, 40, RED);
+            DrawText("PRESS ENTER TO RETURN TO TITLE", screenWidth / 6, screenHeight * 0.43, 20, DARKBLUE);
 
         } break;
         default: break;

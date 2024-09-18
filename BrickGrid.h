@@ -8,6 +8,7 @@ public:
 	BrickGrid(float screenWidth, float screenHeight);
 	bool CheckCollision(Vector2 ballPosition, float ballRadius);
 	void Draw();
+    void Reset();
 
     ScoreManager scoreBoard;
     int Score();

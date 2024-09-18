@@ -46,3 +46,13 @@ bool BrickGrid::CheckCollision(Vector2 ballPosition, float ballRadius) {
 int BrickGrid::Score() {
     return scoreBoard.ShowScore();
 }
+
+void BrickGrid::Reset() {
+    for (int row = 0; row < numRows; row++) {
+        for (int col = 0; col < numBricks; col++) {
+                bricks[row][col].isVisible = true; // Hide the brick
+                scoreBoard.IncreaseScore(-scoreBoard.ShowScore());
+
+        }
+    }
+}
