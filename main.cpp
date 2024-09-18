@@ -20,9 +20,6 @@ int main() {
     Ball myBall(screenWidth / 3, screenHeight / 2, 5, 5, 5);
     Paddle myPaddle(screenWidth / 2, screenHeight * 7 / 8, screenWidth / 8, screenHeight / 40);
     BrickGrid brickGrid(screenWidth, screenHeight);
-
-
-    bool collision;
     
     InitWindow(screenWidth, screenHeight, "Brick Breaker");
     SetTargetFPS(60);
@@ -50,9 +47,9 @@ int main() {
             myBall.Update();
 
             myBall.CheckWindowCollision(screenWidth, screenHeight);
-            collision = CheckCollisionCircleRec(myBall.circ, myBall.radius, myPaddle.vect);
+            myBall.CheckPadCollision(myPaddle.vect);
 
-            if (brickGrid.CheckCollision(myBall.circ, myBall.radius) || collision) {
+            if (brickGrid.CheckCollision(myBall.circ, myBall.radius)) {
                 myBall.speedY *= -1;
             }
 
@@ -61,17 +58,23 @@ int main() {
                 currentScreen = ENDING;
             }
 
+            //check if bricks are gone
+            if (brickGrid.Score() == 800) 
+            { 
+                currentScreen = ENDING;
+                myBall.speedY *= -1;
+            }
+
             break;
         }
 
         case ENDING: 
         {
-            if (IsKeyPressed(KEY_ENTER)) ////////////////////////// Feels like a dirty way to reset
+            if (IsKeyPressed(KEY_ENTER))
             {
                 currentScreen = TITLE;
                 brickGrid.Reset();
                 myBall.circ = { screenWidth / 2, screenHeight / 2 };
-                myBall.speedY *= -1;
             }
 
             break;

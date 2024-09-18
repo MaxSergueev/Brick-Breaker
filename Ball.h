@@ -10,6 +10,7 @@ public:
 	Ball(float x, float y, int r, int sx, int sy);
 	void Update();
 	void Draw();
+	void CheckPadCollision(Rectangle vect);
 	void CheckWindowCollision(float screenWidth, float screenHeight);
 };
 
