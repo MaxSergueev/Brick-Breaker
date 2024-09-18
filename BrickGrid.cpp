@@ -1,4 +1,5 @@
 #include "BrickGrid.h"
+#include "ScoreManager.h"
 
 BrickGrid::BrickGrid(float screenWidth, float screenHeight)
 	: brickWidth(screenWidth / 10), brickHeight(screenHeight / 40) { //didn't know you could do this, pretty cool
@@ -33,10 +34,15 @@ bool BrickGrid::CheckCollision(Vector2 ballPosition, float ballRadius) {
         for (int col = 0; col < numBricks; col++) {
             if (bricks[row][col].isVisible && CheckCollisionCircleRec(ballPosition, ballRadius, bricks[row][col].vect)) {
                 bricks[row][col].isVisible = false; // Hide the brick
+                scoreBoard.IncreaseScore(10); // Increase the score
                 return true;
                 
             }
         }
     }
     return false;
+}
+
+int BrickGrid::Score() {
+    return scoreBoard.ShowScore();
 }

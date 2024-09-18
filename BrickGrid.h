@@ -1,5 +1,6 @@
 #pragma once
 #include "Brick.h"
+#include "ScoreManager.h"
 #include "raylib.h"
 #include <vector>
 class BrickGrid{
@@ -7,6 +8,9 @@ public:
 	BrickGrid(float screenWidth, float screenHeight);
 	bool CheckCollision(Vector2 ballPosition, float ballRadius);
 	void Draw();
+
+    ScoreManager scoreBoard;
+    int Score();
 
 private:
     const int spacing = 5;

@@ -2,6 +2,7 @@
 #include "Ball.h"
 #include "Paddle.h"
 #include "Brick.h"
+#include "ScoreManager.h"
 #include "BrickGrid.h"
 #include <iostream>
 
@@ -38,7 +39,7 @@ int main() {
         myBall.Draw();
         brickGrid.Draw();
 
-        DrawText(TextFormat("X coordinate is: %f", myBall.circ.x), screenWidth * 0.05, screenHeight * 0.95, 20, RED);
+        DrawText(TextFormat("Score: %i", brickGrid.Score()), screenWidth * 0.05, screenHeight * 0.95, 20, RED);
 
         EndDrawing();
 
