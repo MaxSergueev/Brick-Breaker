@@ -105,8 +105,14 @@ int main() {
         } break;
         case ENDING:
         {
+            
             DrawRectangle(0, 0, screenWidth, screenHeight, BLUE);
-            DrawText("ENDING SCREEN", screenWidth / 12, screenHeight * 0.16, 60, DARKBLUE);
+            if (brickGrid.Score() == 800) {
+                DrawText(TextFormat("%s", "VICTORY!"), screenWidth / 12, screenHeight * 0.16, 60, DARKBLUE);
+            }
+            else {
+                DrawText(TextFormat("%s", "GAME OVER"), screenWidth / 12, screenHeight * 0.16, 60, DARKBLUE);
+            }
             DrawText(TextFormat("Score: %i", brickGrid.Score()), screenWidth / 5, screenHeight * 0.25, 40, RED);
             DrawText("PRESS ENTER TO RETURN TO TITLE", screenWidth / 6, screenHeight * 0.43, 20, DARKBLUE);
 
