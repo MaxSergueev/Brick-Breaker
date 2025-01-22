@@ -83,14 +83,12 @@ std::vector<Cell*> FindPath(Cell* start, Cell* goal, std::vector<std::vector<Cel
             DrawRectangle(cell->x * CELL_SIZE, cell->y * CELL_SIZE, CELL_SIZE, CELL_SIZE, DARKBLUE);
         }
 
-        /*
         // Draw path so far
         Cell* trace = current;
         while (trace) {
             DrawRectangle(trace->x * CELL_SIZE, trace->y * CELL_SIZE, CELL_SIZE, CELL_SIZE, MAGENTA);
             trace = trace->parent;
         }
-        */
 
         EndDrawing();
         std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Slow down for visualization
