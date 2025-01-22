@@ -30,7 +30,7 @@ Vector2 lastModifiedCell = { -1, -1 }; // Track the last modified cell to avoid 
 // Directions for neighbors
 std::vector<Vector2> directions = {
     {-1,  1}, {0,  1}, {1,  1}, 
-    {-1,  0}, {0,  0}, {1,  0},
+    {-1,  0},          {1,  0},
 	{-1, -1}, {0, -1}, {1, -1}
 };
 
@@ -83,15 +83,17 @@ std::vector<Cell*> FindPath(Cell* start, Cell* goal, std::vector<std::vector<Cel
             DrawRectangle(cell->x * CELL_SIZE, cell->y * CELL_SIZE, CELL_SIZE, CELL_SIZE, DARKBLUE);
         }
 
+        /*
         // Draw path so far
         Cell* trace = current;
         while (trace) {
             DrawRectangle(trace->x * CELL_SIZE, trace->y * CELL_SIZE, CELL_SIZE, CELL_SIZE, MAGENTA);
             trace = trace->parent;
         }
+        */
 
         EndDrawing();
-        std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Slow down for visualization
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Slow down for visualization
 
         if (current == goal) {
             std::vector<Cell*> path;
@@ -116,6 +118,9 @@ std::vector<Cell*> FindPath(Cell* start, Cell* goal, std::vector<std::vector<Cel
                 }
 
                 float potential_g = current->g + neighbor->weight;
+                if (abs(dir.x) + abs(dir.y) == 2) {
+                    potential_g = current->g + 1.4142 * neighbor->weight;
+                }
 
                 if (std::find(openList.begin(), openList.end(), neighbor) == openList.end() || potential_g < neighbor->g) {
                     neighbor->g = potential_g;
@@ -127,6 +132,7 @@ std::vector<Cell*> FindPath(Cell* start, Cell* goal, std::vector<std::vector<Cel
                         openList.push_back(neighbor);
                     }
                 }
+
             }
         }
     }
@@ -215,7 +221,7 @@ int main() {
                 closedListDraw.clear();
 				openListDraw.clear();  
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         if (openListDraw.size() <= 0) {
 			closedListDraw.clear();
