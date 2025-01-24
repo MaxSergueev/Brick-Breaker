@@ -20,8 +20,8 @@ struct Cell {
 };
 
 // Grid and screen constants
-const int GRID_SIZE = 201; //Must be odd and starts to add splotches at around ~~81
-const int CELL_SIZE = 5;
+const int GRID_SIZE = 221; //Must be odd and starts to add splotches at around ~~81
+const int CELL_SIZE = 4;
 const int SCREEN_WIDTH = GRID_SIZE * CELL_SIZE;
 const int SCREEN_HEIGHT = GRID_SIZE * CELL_SIZE;
 
@@ -208,7 +208,12 @@ int main() {
         }
     }
 
-	generateMaze(grid);
+    generateMaze(grid);
+
+    generatePath(grid, GRID_SIZE - 2, GRID_SIZE - 2, 0);
+    generatePath(grid, 1, GRID_SIZE - 2, 0);
+    generatePath(grid, GRID_SIZE - 2, 1, 0);
+
 
     Cell* player = &grid[1][1];
     std::vector<Cell*> path;
@@ -240,6 +245,14 @@ int main() {
                     pathIndex = 0; // Reset path index for new path
                 }
             }
+        }
+
+        if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)) {
+            Vector2 mouse = GetMousePosition();
+            int mx = mouse.x / CELL_SIZE;
+            int my = mouse.y / CELL_SIZE;
+
+            generatePath(grid, mx, my, 0);
         }
 
         // Handle right-click to cycle cell type
