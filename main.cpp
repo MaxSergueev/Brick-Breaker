@@ -5,6 +5,8 @@
 #include <thread>
 #include <chrono>
 
+#include <algorithm>
+
 // Struct to represent a grid cell
 struct Cell {
     int x, y;
@@ -18,8 +20,8 @@ struct Cell {
 };
 
 // Grid and screen constants
-const int GRID_SIZE = 50;
-const int CELL_SIZE = 20;
+const int GRID_SIZE = 201; //Must be odd and starts to add splotches at around ~~81
+const int CELL_SIZE = 5;
 const int SCREEN_WIDTH = GRID_SIZE * CELL_SIZE;
 const int SCREEN_HEIGHT = GRID_SIZE * CELL_SIZE;
 
@@ -33,6 +35,57 @@ std::vector<Vector2> directions = {
     {-1,  0},          {1,  0},
 	{-1, -1}, {0, -1}, {1, -1}
 };
+
+// Visualisation speed variable
+const int VISUALISATION_SPEED = 0;
+
+// Maze generation
+void generatePath(std::vector<std::vector<Cell>>& grid, int x, int y, int depth = 0) {
+    std::vector<std::pair<short, short>> directions = {
+		{2,0}, {-2,0}, {0,2}, {0,-2},  // Orthoganal
+		{2,2}, {-2,2}, {2,-2}, {-2,-2} // Diagonal
+    };
+
+	const short MAX_DEPTH = 450; //Stops recursion from going too deep and throwing a stack overflow ~~(750 for non diagonal mazes, and 450 for diagonal mazes)
+    if (depth > MAX_DEPTH) return;
+
+    std::random_shuffle(directions.begin(), directions.end());
+
+    for (auto& dir : directions) {
+        int nx = x + dir.first;
+        int ny = y + dir.second;
+
+        // Check bounds and if target cell is a wall
+        if (nx > 0 && nx < GRID_SIZE - 1 &&
+            ny > 0 && ny < GRID_SIZE - 1 &&
+            grid[nx][ny].weight == -1) {
+
+            // Clear path to neighbor
+            grid[nx][ny].weight = 1;
+            grid[x + dir.first / 2][y + dir.second / 2].weight = 1;
+
+            // Recursive path generation
+            generatePath(grid, nx, ny, depth + 1);
+        }
+    }
+}
+
+
+void generateMaze(std::vector<std::vector<Cell>>& grid) {
+    // Reset entire grid to walls
+    for (int x = 0; x < GRID_SIZE; ++x) {
+        for (int y = 0; y < GRID_SIZE; ++y) {
+            grid[x][y].weight = -1;  // Mark as wall
+        }
+    }
+
+    // Starting point
+    int startX = 1, startY = 1;
+    grid[startX][startY].weight = 1;
+
+    // Recursive path generation
+    generatePath(grid, startX, startY);
+}
 
 // Calculate Manhattan distance
 float ManhattanDistance(const Cell& a, const Cell& b) {
@@ -90,8 +143,13 @@ std::vector<Cell*> FindPath(Cell* start, Cell* goal, std::vector<std::vector<Cel
             trace = trace->parent;
         }
 
+		// Draw Start and goal cells
+        DrawRectangle(start->x * CELL_SIZE, start->y * CELL_SIZE, CELL_SIZE, CELL_SIZE, GREEN);
+        DrawRectangle(goal->x * CELL_SIZE, goal->y * CELL_SIZE, CELL_SIZE, CELL_SIZE, RED);
+
+
         EndDrawing();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Slow down for visualization
+        std::this_thread::sleep_for(std::chrono::milliseconds(VISUALISATION_SPEED)); // Slow down for visualization
 
         if (current == goal) {
             std::vector<Cell*> path;
@@ -150,7 +208,9 @@ int main() {
         }
     }
 
-    Cell* player = &grid[0][0];
+	generateMaze(grid);
+
+    Cell* player = &grid[1][1];
     std::vector<Cell*> path;
     std::vector<Cell*> openListDraw;
     std::vector<Cell*> closedListDraw;
@@ -219,7 +279,7 @@ int main() {
                 closedListDraw.clear();
 				openListDraw.clear();  
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(VISUALISATION_SPEED));
         }
         if (openListDraw.size() <= 0) {
 			closedListDraw.clear();
@@ -254,10 +314,17 @@ int main() {
         // Draw path
         for (Cell* cell : path) {
             DrawRectangle(cell->x * CELL_SIZE, cell->y * CELL_SIZE, CELL_SIZE, CELL_SIZE, MAGENTA);
+            if (cell = path.back()) {
+                DrawRectangle(cell->x * CELL_SIZE, cell->y * CELL_SIZE, CELL_SIZE, CELL_SIZE, YELLOW);
+            }
+            if (cell = path.front()) {
+                DrawRectangle(cell->x * CELL_SIZE, cell->y * CELL_SIZE, CELL_SIZE, CELL_SIZE, GREEN);
+            }
+
         }
 
         // Draw player
-        DrawCircle(player->x * CELL_SIZE + CELL_SIZE / 2, player->y * CELL_SIZE + CELL_SIZE / 2, CELL_SIZE / 4, YELLOW);
+        DrawCircle(player->x * CELL_SIZE + CELL_SIZE / 2, player->y * CELL_SIZE + CELL_SIZE / 2, CELL_SIZE / 2.5, YELLOW);
 
         EndDrawing();
     }
