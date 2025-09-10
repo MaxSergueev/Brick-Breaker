@@ -1,19 +1,31 @@
 #include "raylib.h"
+#include "Boid.h"
 #include <iostream>
 
 using namespace std;
+int width = 1280;
+int height = 720;
+
+int const boidTotal = 100;
+
+Boid boids[boidTotal];
 
 int main() {
 
-    
-    cout << "Hello World" << endl;
-
-    InitWindow(300, 300, "My first Raylib window!");
+    InitWindow(width, height, "My first Raylib window!");
     SetTargetFPS(60);
+    for (int i = 0; i < size(boids); i++) {
+        boids[i].Initialize();
+    }
 
     while (!WindowShouldClose()) {
         BeginDrawing();
-        ClearBackground(DARKGREEN);
+
+        for (int i = 0; i < size(boids); i++) {
+            boids[i].Update(boids, boidTotal);
+        }
+
+        ClearBackground(SKYBLUE);
         EndDrawing();
     }
 
