@@ -12,7 +12,7 @@ Boid boids[boidTotal];
 
 int main() {
 
-    InitWindow(width, height, "My first Raylib window!");
+    InitWindow(width, height, "Boids Mania");
     SetTargetFPS(60);
     for (int i = 0; i < size(boids); i++) {
         boids[i].Initialize();
