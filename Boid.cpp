@@ -1,12 +1,17 @@
 #include "boid.h"
 #include "raymath.h"
+#include "math.h"
+#include <cmath>
+#include <iostream>
+#include <string>
 
 Boid::Boid()
 {
 }
 
-void Boid::Initialize()
+void Boid::Initialize(Texture texture)
 {
+    fish = texture;
 	float posX = GetRandomValue(10, GetScreenWidth() - 10);
 	float posY = GetRandomValue(10, GetScreenHeight() - 10);
 	boidPosition = {posX, posY};
@@ -19,19 +24,42 @@ void Boid::Initialize()
 void Boid::Update(Boid flock[], int const size)
 {
     // Calculate steering forces
-    Vector2 separation = Vector2Scale(Separate(flock, size), 1.2f);
-    Vector2 alignment = Vector2Scale(Align(flock, size), 1.0f);
-    Vector2 cohesion = Vector2Scale(Group(flock, size), 1.0f);
+    Vector2 separation = Vector2Scale(Separate(flock, size), 1.0f);
+    Vector2 alignment = Vector2Scale(Align(flock, size), 0.2f);
+    Vector2 cohesion = Vector2Scale(Group(flock, size), 0.8f);
+    Vector2 random = Vector2Scale(Random(flock, size), 1.0f);
 
     // Add momentum by blending speeds
     float momentum = 0.85f;
     Vector2 newSpeed = Vector2Add(boidSpeed, separation);
     newSpeed = Vector2Add(newSpeed, alignment);
     newSpeed = Vector2Add(newSpeed, cohesion);
+    newSpeed = Vector2Add(newSpeed, random);
+
+    // Turning ///////////////////////////////////////////////////////////////////////////
+    // Unsigned angle in radians
+    float angleBetween = Vector2Angle(newSpeed, boidSpeed);  ////// manually trig it
+    // cross product to determine sign
+    float cross = boidSpeed.x * newSpeed.y - boidSpeed.y * newSpeed.x;
+    // Apply sign to angle
+    float turnAngle = (cross < 0 ? -1 : 1) * angleBetween * RAD2DEG;
+
+    if (fabs(turnAngle) > maxTurn) {
+        float clampedTurn = (turnAngle > 0) ? maxTurn : -maxTurn;
+        Vector2 rotateVector = Vector2Scale(Vector2Normalize(boidSpeed), Vector2Length(newSpeed));
+        newSpeed = Vector2Rotate(rotateVector, clampedTurn * DEG2RAD);
+    }
+    // Turning ///////////////////////////////////////////////////////////////////////////
 
     // Blend old and new speeds
     boidSpeed.x = boidSpeed.x * momentum + newSpeed.x * (1 - momentum);
     boidSpeed.y = boidSpeed.y * momentum + newSpeed.y * (1 - momentum);
+
+    // limit speed
+    if (Vector2Length(boidSpeed) > maxSpeed) {
+        Vector2Normalize(boidSpeed);
+        boidSpeed = Vector2Scale(boidSpeed, maxSpeed);
+    }
 
     // Update position
     boidPosition = Vector2Add(boidPosition, boidSpeed);
@@ -42,8 +70,10 @@ void Boid::Update(Boid flock[], int const size)
     if (boidPosition.y > GetScreenHeight()) boidPosition.y = 0;
     if (boidPosition.y < 0) boidPosition.y = GetScreenHeight();
 
+    float rot = Vector2Angle(boidSpeed, Vector2 {-1, 0}) * RAD2DEG;
+
     // Draw
-    DrawCircleV(boidPosition, 5, WHITE);
+    DrawTextureEx(fish, boidPosition, rot, 1, WHITE);
 	//DrawCircleLines(boidPosition.x, boidPosition.y, 10, RED); // For debugging
 }
 
@@ -107,7 +137,7 @@ Vector2 Boid::Group(Boid flock[], int const size)
     Vector2 steering = { 0.0f, 0.0f };
     int neighborCount = 0;
     float cohesionRadius = 30.0f;
-    float maxForce = 0.3f;
+    float maxForce = 0.2f;
 
     for (int i = 0; i < size; i++) {
         float distance = Vector2Distance(boidPosition, flock[i].boidPosition);
@@ -141,6 +171,22 @@ Vector2 Boid::Group(Boid flock[], int const size)
         }
     }
 
+    return steering;
+}
+
+Vector2 Boid::Random(Boid flock[], int const size)
+{
+    Vector2 steering = { 0.0f, 0.0f };
+    float maxForce = 2.0f;
+
+    steering.x = GetRandomValue(0, 100) / 100;
+    steering.y = GetRandomValue(0, 100) / 100;
+
+    float length = Vector2Length(steering);
+    if (length > 0) {
+        steering = Vector2Scale(steering, maxForce / length);
+
+    }
     return steering;
 }
 

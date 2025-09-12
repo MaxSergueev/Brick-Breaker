@@ -14,8 +14,14 @@ int main() {
 
     InitWindow(width, height, "Boids Mania");
     SetTargetFPS(60);
+
+    Image fish = LoadImage("resources/WhiteFish.png");
+    ImageResize(&fish, 15, 15);
+    Texture2D texture = LoadTextureFromImage(fish);
+    UnloadImage(fish);
+
     for (int i = 0; i < size(boids); i++) {
-        boids[i].Initialize();
+        boids[i].Initialize(texture);
     }
 
     while (!WindowShouldClose()) {
