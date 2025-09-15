@@ -3,12 +3,13 @@
 #include <iostream>
 
 using namespace std;
-int width = 1280;
-int height = 720;
+float width = 1280;
+float height = 720;
 
 int const boidTotal = 100;
 
 Boid boids[boidTotal];
+Obstacles obstacles;
 
 int main() {
 
@@ -24,11 +25,20 @@ int main() {
         boids[i].Initialize(texture);
     }
 
+    obstacles.addRectangle(Vector2{ width / 2 + 50, height / 2 }, 200, 100);
+    obstacles.addRectangle(Vector2{ width / 2 - 50, height / 2 + 100}, 200, 100);
+    obstacles.addRectangle(Vector2{ width / 2 - 150, height / 2 + 100 }, 100, 200);
+
     while (!WindowShouldClose()) {
         BeginDrawing();
 
+        for (const Rectangle& rect : obstacles.obstacleList)
+        {
+            DrawRectangle(rect.x, rect.y, rect.width, rect.height, PURPLE);
+        }
+
         for (int i = 0; i < size(boids); i++) {
-            boids[i].Update(boids, boidTotal);
+            boids[i].Update(boids, obstacles, boidTotal);
         }
 
         ClearBackground(SKYBLUE);

@@ -4,6 +4,13 @@
 #include <cmath>
 #include <iostream>
 #include <string>
+#include <algorithm>
+
+template <typename T>
+T clamp(T value, T minVal, T maxVal)
+{
+    return std::max(minVal, std::min(value, maxVal));
+}
 
 Boid::Boid()
 {
@@ -21,17 +28,19 @@ void Boid::Initialize(Texture texture)
 	boidSpeed = { speedX / 100, speedY / 100};
 }
 
-void Boid::Update(Boid flock[], int const size)
+void Boid::Update(Boid flock[], const Obstacles& obstacleField, int const size)
 {
     // Calculate desired velocities for each behavior
     Vector2 separation = Vector2Scale(Separate(flock, size), 2.5f);
     Vector2 alignment = Vector2Scale(Align(flock, size), 1.0f);
     Vector2 cohesion = Vector2Scale(Group(flock, size), 5.5f);
+    Vector2 obstacles = Vector2Scale(AvoidObstacles(obstacleField), 1000.0f);
     Vector2 random = Vector2Scale(Random(flock, size), 0.1f);
 
     // Combine all desired velocities
     Vector2 desiredVelocity = Vector2Add(separation, alignment);
     desiredVelocity = Vector2Add(desiredVelocity, cohesion);
+    desiredVelocity = Vector2Add(desiredVelocity, obstacles); //
     desiredVelocity = Vector2Add(desiredVelocity, random);
 
     // Normalize and scale to max speed
@@ -69,7 +78,7 @@ void Boid::Update(Boid flock[], int const size)
     }
 
     // Apply steering force
-    boidSpeed = Vector2Add(boidSpeed, Vector2Scale(steeringForce, 0.16f));
+    boidSpeed = Vector2Add(boidSpeed, Vector2Scale(steeringForce, 0.15f));
 
     // Ensure minimum speed
     float currentSpeed = Vector2Length(boidSpeed);
@@ -170,8 +179,8 @@ Vector2 Boid::Group(Boid flock[], int const size)
 {
     Vector2 steering = { 0.0f, 0.0f };
     int neighborCount = 0;
-    float cohesionRadius = 30.0f;
-    float maxForce = 0.2f;
+    float cohesionRadius = 50.0f;
+    float maxForce = 0.3f;
 
     for (int i = 0; i < size; i++) {
         float distance = Vector2Distance(boidPosition, flock[i].boidPosition);
@@ -225,9 +234,41 @@ Vector2 Boid::Random(Boid flock[], int const size)
 }
 
 
-Vector2 Boid::AvoidObstacles(Obstacle[])
+Vector2 Boid::AvoidObstacles(const Obstacles& obstacleField)
 {
-    return Vector2();
+    Vector2 steering = { 0.0f, 0.0f };
+    float detectionRadius = 80.0f;
+    float maxAvoidForce = 10.0f;
+
+    for (const Rectangle& rect : obstacleField.obstacleList)
+    {
+        if (CheckCollisionCircleRec(boidPosition, detectionRadius, rect))
+        {
+            float closestX = clamp(boidPosition.x, rect.x, rect.x + rect.width);
+            float closestY = clamp(boidPosition.y, rect.y, rect.y + rect.height);
+            Vector2 closestPoint = { closestX, closestY };
+
+            // Vector pointing away from the obstacle
+            Vector2 away = Vector2Subtract(boidPosition, closestPoint);
+
+            // Inverse-square scaling based on proximity
+            float dist = Vector2Length(away);
+            if (dist > 0)
+            {
+                Vector2 scaledAway = Vector2Scale(away, 1.0f / (dist * dist));
+                steering = Vector2Add(steering, scaledAway);
+            }
+        }
+    }
+
+    float steerLen = Vector2Length(steering);
+    if (steerLen > maxAvoidForce)
+    {
+        steering = Vector2Scale(steering, maxAvoidForce / steerLen);
+    }
+
+    return steering;
 }
+
 
 
