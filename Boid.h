@@ -6,7 +6,7 @@ class Boid
 {
 public:
 	Boid();
-	void Initialize(Texture texture);
+	void Initialize(Texture texture, Color boidColor);
 	void Update(Boid flock[], const Obstacles& obstacleField, int const size);
 	Vector2 Separate(Boid flock[], int const size);
 	Vector2 AvoidObstacles(const Obstacles& obstacle);
@@ -19,8 +19,11 @@ private:
 	Vector2 boidSpeed = { 1, 1 };
 	Texture fish;
 
-	float maxSpeed = 4.0f;
-	float maxTurn = 30.0f;
+	float maxSpeed = 2.0f;
+	float maxTurn = 20.0f;
+
+	Color boidColor = WHITE;
 
 };
 
+bool ColorsAreEqual(Color a, Color b);

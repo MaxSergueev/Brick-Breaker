@@ -12,11 +12,19 @@ T clamp(T value, T minVal, T maxVal)
     return std::max(minVal, std::min(value, maxVal));
 }
 
+bool ColorsAreEqual(Color a, Color b)
+{
+    return (a.r == b.r) &&
+        (a.g == b.g) &&
+        (a.b == b.b) &&
+        (a.a == b.a);
+}
+
 Boid::Boid()
 {
 }
 
-void Boid::Initialize(Texture texture)
+void Boid::Initialize(Texture texture, Color color)
 {
     fish = texture;
 	float posX = GetRandomValue(10, GetScreenWidth() - 10);
@@ -26,16 +34,18 @@ void Boid::Initialize(Texture texture)
 	float speedX = GetRandomValue(-200, 200);
 	float speedY = GetRandomValue(-200, 200);
 	boidSpeed = { speedX / 100, speedY / 100};
+
+    boidColor = color;
 }
 
 void Boid::Update(Boid flock[], const Obstacles& obstacleField, int const size)
 {
     // Calculate desired velocities for each behavior
-    Vector2 separation = Vector2Scale(Separate(flock, size), 2.5f);
+    Vector2 separation = Vector2Scale(Separate(flock, size), 4.0f);
     Vector2 alignment = Vector2Scale(Align(flock, size), 1.0f);
-    Vector2 cohesion = Vector2Scale(Group(flock, size), 5.5f);
+    Vector2 cohesion = Vector2Scale(Group(flock, size), 3.5f);
     Vector2 obstacles = Vector2Scale(AvoidObstacles(obstacleField), 1000.0f);
-    Vector2 random = Vector2Scale(Random(flock, size), 0.1f);
+    Vector2 random = Vector2Scale(Random(flock, size), 0.05f);
 
     // Combine all desired velocities
     Vector2 desiredVelocity = Vector2Add(separation, alignment);
@@ -101,7 +111,7 @@ void Boid::Update(Boid flock[], const Obstacles& obstacleField, int const size)
 
     // Calculate rotation for drawing
     float rot = Vector2Angle(boidSpeed, Vector2{ -1, 0 }) * RAD2DEG;
-    DrawTextureEx(fish, boidPosition, rot, 1, WHITE);
+    DrawTextureEx(fish, boidPosition, rot, 1, boidColor);
 }
 
 Vector2 Boid::Separate(Boid flock[], int const size)
@@ -146,7 +156,7 @@ Vector2 Boid::Align(Boid flock[], int const size)
     for (int i = 0; i < size; i++) {
         float distance = Vector2Distance(boidPosition, flock[i].boidPosition);
 
-        if (distance > 0 && distance < alignmentRadius) {
+        if (distance > 0 && distance < alignmentRadius && ColorsAreEqual(boidColor, flock[i].boidColor)) {
             steering = Vector2Add(steering, flock[i].boidSpeed);
             neighborCount++;
         }
@@ -185,7 +195,7 @@ Vector2 Boid::Group(Boid flock[], int const size)
     for (int i = 0; i < size; i++) {
         float distance = Vector2Distance(boidPosition, flock[i].boidPosition);
 
-        if (distance > 0 && distance < cohesionRadius) {
+        if (distance > 0 && distance < cohesionRadius && ColorsAreEqual(boidColor, flock[i].boidColor)) {
             steering = Vector2Add(steering, flock[i].boidPosition);
             neighborCount++;
         }
@@ -237,7 +247,7 @@ Vector2 Boid::Random(Boid flock[], int const size)
 Vector2 Boid::AvoidObstacles(const Obstacles& obstacleField)
 {
     Vector2 steering = { 0.0f, 0.0f };
-    float detectionRadius = 80.0f;
+    float detectionRadius = 45.0f;
     float maxAvoidForce = 10.0f;
 
     for (const Rectangle& rect : obstacleField.obstacleList)
