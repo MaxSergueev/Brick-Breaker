@@ -18,8 +18,9 @@ private:
 	Vector2 boidPosition = {0, 0};
 	Vector2 boidSpeed = { 1, 1 };
 	Texture fish;
-	float maxSpeed = 0.9f;
-	float maxTurn = 60;
+
+	float maxSpeed = 3.0f;
+	float maxTurn = 5.0f;
 
 };
 
