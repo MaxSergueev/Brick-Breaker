@@ -1,6 +1,7 @@
 # Predator-Prey Boid Simulation
 
 A dynamic flocking simulation featuring three competing species in a predator-prey relationship, built with C++ and Raylib.
+![Boids](https://github.com/user-attachments/assets/2f6ef0ee-48b7-427a-84be-58cc69b2fa47)
 
 ## Overview
 
