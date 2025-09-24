@@ -16,42 +16,88 @@ bool ColorsAreEqual(Color a, Color b)
 {
     return (a.r == b.r) &&
         (a.g == b.g) &&
-        (a.b == b.b) &&
-        (a.a == b.a);
+        (a.b == b.b);
 }
 
 Boid::Boid()
 {
 }
 
-void Boid::Initialize(Texture texture, Color color)
+void Boid::Initialize(Texture texture, BoidType type)
 {
     fish = texture;
-	float posX = GetRandomValue(10, GetScreenWidth() - 10);
-	float posY = GetRandomValue(10, GetScreenHeight() - 10);
-	boidPosition = {posX, posY};
+    boidType = type;
+    boidColor = GetColorForType(type);
 
-	float speedX = GetRandomValue(-200, 200);
-	float speedY = GetRandomValue(-200, 200);
-	boidSpeed = { speedX / 100, speedY / 100};
+    float posX = GetRandomValue(10, GetScreenWidth() - 10);
+    float posY = GetRandomValue(10, GetScreenHeight() - 10);
+    boidPosition = { posX, posY };
 
-    boidColor = color;
+    float speedX = GetRandomValue(-200, 200);
+    float speedY = GetRandomValue(-200, 200);
+    boidSpeed = { speedX / 100, speedY / 100 };
+}
+
+Color Boid::GetColorForType(BoidType type) const {
+    switch (type) {
+    case BoidType::Purple:
+        return Color{ 202, 78, 121, 255 };
+    case BoidType::Tan:
+        return Color{ 255, 193, 142, 255 };
+    case BoidType::Green:
+        return Color{ 131, 252, 107, 255 };
+    default:
+        return WHITE;
+    }
 }
 
 void Boid::Update(Boid flock[], const Obstacles& obstacleField, int const size)
 {
-    // Calculate desired velocities for each behavior
+    if (!IsAlive) return;
+
+    // Base behaviors
     Vector2 separation = Vector2Scale(Separate(flock, size), 4.0f);
     Vector2 alignment = Vector2Scale(Align(flock, size), 1.0f);
     Vector2 cohesion = Vector2Scale(Group(flock, size), 3.5f);
     Vector2 obstacles = Vector2Scale(AvoidObstacles(obstacleField), 1000.0f);
     Vector2 random = Vector2Scale(Random(flock, size), 0.05f);
 
-    // Combine all desired velocities
+    // Type-specific behaviors
+    Vector2 hunt = { 0, 0 };
+    Vector2 flee = { 0, 0 };
+
+    switch (boidType) {
+    case BoidType::Purple:  // Highly avoidant
+        hunt = Vector2Scale(Hunt(flock, size), 1.0f);     
+        flee = Vector2Scale(Flee(flock, size), 12.0f);    
+        separation = Vector2Scale(separation, 2.0f);      
+        maxSpeed = 3.0f;                                  
+        maxTurn = 30.0f;                                  
+        break;
+
+    case BoidType::Tan:     // Aggressive
+        hunt = Vector2Scale(Hunt(flock, size), 10.0f);    
+        flee = Vector2Scale(Flee(flock, size), 1.0f);     
+        cohesion = Vector2Scale(cohesion, 1.5f);          
+        maxSpeed = 2.8f;                                  
+        maxTurn = 25.0f;                                  
+        break;
+
+    case BoidType::Green:   // Balanced
+        hunt = Vector2Scale(Hunt(flock, size), 5.0f);     
+        flee = Vector2Scale(Flee(flock, size), 5.0f);     
+        maxSpeed = 2.5f;                                  
+        maxTurn = 20.0f;                                  
+        break;
+    }
+
+    // Combine all behaviors
     Vector2 desiredVelocity = Vector2Add(separation, alignment);
     desiredVelocity = Vector2Add(desiredVelocity, cohesion);
-    desiredVelocity = Vector2Add(desiredVelocity, obstacles); //
+    desiredVelocity = Vector2Add(desiredVelocity, obstacles);
     desiredVelocity = Vector2Add(desiredVelocity, random);
+    desiredVelocity = Vector2Add(desiredVelocity, hunt);
+    desiredVelocity = Vector2Add(desiredVelocity, flee);
 
     // Normalize and scale to max speed
     if (Vector2Length(desiredVelocity) > 0) {
@@ -81,7 +127,6 @@ void Boid::Update(Boid flock[], const Obstacles& obstacleField, int const size)
     // Clamp turn angle
     if (fabs(turnAngle) > maxTurn) {
         turnAngle = (turnAngle > 0 ? maxTurn : -maxTurn);
-        // Convert back to radians for rotation
         float clampedAngle = turnAngle * DEG2RAD;
         steeringForce = Vector2Rotate(Vector2Scale(Vector2Normalize(boidSpeed),
             Vector2Length(steeringForce)), clampedAngle);
@@ -156,7 +201,7 @@ Vector2 Boid::Align(Boid flock[], int const size)
     for (int i = 0; i < size; i++) {
         float distance = Vector2Distance(boidPosition, flock[i].boidPosition);
 
-        if (distance > 0 && distance < alignmentRadius && ColorsAreEqual(boidColor, flock[i].boidColor)) {
+        if (distance > 0 && distance < alignmentRadius && IsSameType(flock[i])) {
             steering = Vector2Add(steering, flock[i].boidSpeed);
             neighborCount++;
         }
@@ -195,7 +240,7 @@ Vector2 Boid::Group(Boid flock[], int const size)
     for (int i = 0; i < size; i++) {
         float distance = Vector2Distance(boidPosition, flock[i].boidPosition);
 
-        if (distance > 0 && distance < cohesionRadius && ColorsAreEqual(boidColor, flock[i].boidColor)) {
+        if (distance > 0 && distance < cohesionRadius && IsSameType(flock[i])) {
             steering = Vector2Add(steering, flock[i].boidPosition);
             neighborCount++;
         }
@@ -250,8 +295,15 @@ Vector2 Boid::AvoidObstacles(const Obstacles& obstacleField)
     float detectionRadius = 45.0f;
     float maxAvoidForce = 10.0f;
 
-    for (const Rectangle& rect : obstacleField.obstacleList)
+    for (size_t i = 0; i < obstacleField.obstacleList.size(); i++)
     {
+        const Rectangle& rect = obstacleField.obstacleList[i];
+        const Color& obstacleColor = obstacleField.obstacleColors[i];
+
+        // Skip collision check if colors match (boid can enter its own color anemone)
+        if (ColorsAreEqual(boidColor, obstacleColor))
+            continue;
+
         if (CheckCollisionCircleRec(boidPosition, detectionRadius, rect))
         {
             float closestX = clamp(boidPosition.x, rect.x, rect.x + rect.width);
@@ -275,6 +327,90 @@ Vector2 Boid::AvoidObstacles(const Obstacles& obstacleField)
     if (steerLen > maxAvoidForce)
     {
         steering = Vector2Scale(steering, maxAvoidForce / steerLen);
+    }
+
+    return steering;
+}
+
+BoidType Boid::GetPredator() const {
+    switch (boidType) {
+    case BoidType::Purple: return BoidType::Tan;      // Tan eats Purple
+    case BoidType::Tan: return BoidType::Green;       // Green eats Tan
+    case BoidType::Green: return BoidType::Purple;    // Purple eats Green
+    default: return boidType;
+    }
+}
+
+BoidType Boid::GetPrey() const {
+    switch (boidType) {
+    case BoidType::Purple: return BoidType::Green;    // Purple eats Green
+    case BoidType::Tan: return BoidType::Purple;      // Tan eats Purple
+    case BoidType::Green: return BoidType::Tan;       // Green eats Tan
+    default: return boidType;
+    }
+}
+
+Vector2 Boid::Hunt(Boid flock[], int const size)
+{
+    Vector2 steering = { 0.0f, 0.0f };
+    float closestDist = huntRadius;
+    Vector2 closestPrey = { 0.0f, 0.0f };
+    bool foundPrey = false;
+
+    for (int i = 0; i < size; i++) {
+        if (!flock[i].IsAlive) continue; 
+
+        if (flock[i].boidType == GetPrey()) {
+            float distance = Vector2Distance(boidPosition, flock[i].boidPosition);
+
+            if (distance < catchRadius) {
+                flock[i].IsAlive = false;
+                continue;
+            }
+
+            if (distance < closestDist) {
+                closestDist = distance;
+                closestPrey = flock[i].boidPosition;
+                foundPrey = true;
+            }
+        }
+    }
+
+    if (foundPrey) {
+        Vector2 desired = Vector2Subtract(closestPrey, boidPosition);
+        desired = Vector2Scale(Vector2Normalize(desired), maxSpeed);
+        steering = Vector2Subtract(desired, boidSpeed);
+    }
+
+    return steering;
+}
+
+Vector2 Boid::Flee(Boid flock[], int const size)
+{
+    Vector2 steering = { 0.0f, 0.0f };
+    int predatorCount = 0;
+
+    for (int i = 0; i < size; i++) {
+        if (!flock[i].IsAlive) continue;
+
+        if (flock[i].boidType == GetPredator()) {
+            float distance = Vector2Distance(boidPosition, flock[i].boidPosition);
+
+            if (distance < fleeRadius) {
+                Vector2 diff = Vector2Subtract(boidPosition, flock[i].boidPosition);
+                diff = Vector2Scale(diff, 1.0f / (distance * distance));
+                steering = Vector2Add(steering, diff);
+                predatorCount++;
+            }
+        }
+    }
+
+    if (predatorCount > 0) {
+        steering = Vector2Scale(steering, 1.0f / predatorCount);
+        float length = Vector2Length(steering);
+        if (length > 0) {
+            steering = Vector2Scale(Vector2Normalize(steering), maxSpeed);
+        }
     }
 
     return steering;
